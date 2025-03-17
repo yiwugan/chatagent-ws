@@ -21,8 +21,8 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - chatagent-network
+      - chatagent-ws-network
 
 networks:
-  chatagent-network:
+  chatagent-ws-network:
     driver: bridge
