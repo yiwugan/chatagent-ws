@@ -111,6 +111,14 @@ def validate_token(token, client_ip):
         return True, token_info["session_id"]
 
 
+# New health check endpoint
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    logger.debug(f"health_check enter")
+    """Simple health check endpoint."""
+    return jsonify({"status": "healthy"}), 200
+
+
 @app.route('/api/get_session_token', methods=['POST'])
 def get_session_token():
     logger.debug(f"get_session_token enter")
@@ -259,11 +267,6 @@ def handle_message(data):
         emit("error", {"message": "Internal server error"})
     logger.debug(f"handle_message exit: {client_ip} {session_id}")
 
-# New health check endpoint
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Simple health check endpoint."""
-    return jsonify({"status": "healthy"}), 200
 
 if __name__ == "__main__":
     port = int(APP_WS_PORT)
