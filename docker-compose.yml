@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  chatagent-ws:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatagent-ws
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    environment:
+      - APP_ENV=production # Set to production
+    env_file: []
+    restart: unless-stopped
