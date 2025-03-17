@@ -32,12 +32,17 @@ COPY main.py .
 COPY src/chatagent_ws/ ./src/chatagent_ws/
 
 # Create non-root user
-RUN useradd -m -r appuser && chown appuser:appuser /app
+RUN useradd -m -r appuser && chown appuser:appuser /app && \
+    mkdir -p /app/logs && chown appuser:appuser /app/logs
 USER appuser
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    APP_API_PORT=8001 \
+    APP_LOG_LEVEL="INFO" \
+    APP_LOG_FILE_PATH="/app/logs" \
+    APP_LOG_FILE_ENABLED=True
 
 EXPOSE 8001
 

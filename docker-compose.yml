@@ -8,11 +8,11 @@ services:
     container_name: chatagent-ws
     ports:
       - "8001:8001" # Maps host port 8001 to container port 8001
-    volumes:
-      - .:/app # Mounts the local directory to /app in the container
-    environment:
-      - APP_ENV=production
-    env_file: []
+    volumes: []
+#      - .:/app # Mounts the local directory to /app in the container
+    environment: []
+    env_file:
+      - .env
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/get_session_token"] # Healthcheck endpoint
