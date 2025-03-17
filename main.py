@@ -259,6 +259,11 @@ def handle_message(data):
         emit("error", {"message": "Internal server error"})
     logger.debug(f"handle_message exit: {client_ip} {session_id}")
 
+# New health check endpoint
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Simple health check endpoint."""
+    return jsonify({"status": "healthy"}), 200
 
 if __name__ == "__main__":
     port = int(APP_WS_PORT)

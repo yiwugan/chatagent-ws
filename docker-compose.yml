@@ -15,7 +15,7 @@ services:
       - .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/api/get_session_token"] # Healthcheck endpoint
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"] # Healthcheck endpoint
       interval: 30s
       timeout: 5s
       retries: 3
