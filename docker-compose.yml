@@ -7,10 +7,22 @@ services:
       dockerfile: Dockerfile
     container_name: chatagent-ws
     ports:
-      - "8001:8001"
+      - "8001:8001" # Maps host port 8001 to container port 8001
     volumes:
-      - .:/app
+      - .:/app # Mounts the local directory to /app in the container
     environment:
-      - APP_ENV=production # Set to production
+      - APP_ENV=production
     env_file: []
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/get_session_token"] # Healthcheck endpoint
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - chatagent-network
+
+networks:
+  chatagent-network:
+    driver: bridge
