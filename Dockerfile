@@ -1,12 +1,12 @@
 # Stage 1: Builder
 FROM python:3.12-slim AS builder
-
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libevent-dev \
+# Install system dependencies and Poetry
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    && pip install poetry \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
@@ -14,10 +14,9 @@ RUN curl -sSL https://install.python-poetry.org | python3 - && \
 
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry config virtualenvs.create false && \
+# Install dependencies
+RUN poetry config virtualenvs.create false \
     && poetry install --no-root --no-interaction --no-ansi
-
-COPY . .
 
 # Stage 2: Runtime
 FROM python:3.12-slim AS runtime
@@ -29,7 +28,19 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
-COPY --from=builder /app /app
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
+
+# Copy the source code
+COPY main.py .
+COPY src/chatagent_ws/ ./src/chatagent_ws/
+
+# Create non-root user
+RUN useradd -m -r appuser && chown appuser:appuser /app
+USER appuser
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app
 
 EXPOSE 8001
 
