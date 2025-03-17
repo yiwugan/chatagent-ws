@@ -1,5 +1,7 @@
 from dotenv import load_dotenv
 from gevent import monkey
+load_dotenv()
+
 monkey.patch_all()
 
 import json
@@ -16,15 +18,13 @@ from flask_cors import CORS  # Import Flask-CORS
 from flask_socketio import SocketIO, emit
 from pydantic import BaseModel
 
-
 from src.chatagent_ws.LoggingUtil import *
 from src.chatagent_ws.AppConfig import APP_CONNECTION_MAX_SESSIONS_PER_IP, \
     APP_CONNECTION_MAX_REQUESTS_PER_MINUTE, APP_SECURITY_TOKEN_EXPIRY_SECONDS, APP_API_HOST, APP_API_PORT, \
-    APP_WS_PORT, APP_WS_HOST, APP_API_KEY, APP_WS_API_KEY, APP_ENV
+    APP_WS_PORT, APP_API_KEY, APP_WS_API_KEY, APP_ENV
 
 logger = get_logger("chatagent-ws")
 
-load_dotenv()
 
 # Configuration
 app = Flask(__name__)
@@ -53,6 +53,7 @@ socketio = SocketIO(app,
 session_counts = defaultdict(int)
 request_counts = defaultdict(list)
 rate_limit_lock = Lock()
+
 
 class AIResponse(BaseModel):
     message: str
@@ -258,8 +259,10 @@ def handle_message(data):
         emit("error", {"message": "Internal server error"})
     logger.debug(f"handle_message exit: {client_ip} {session_id}")
 
+
 if __name__ == "__main__":
     port = int(APP_WS_PORT)
+    APP_WS_HOST = "0.0.0.0"
     try:
         if APP_ENV == "dev":
             logger.info(f"Starting dev server on port {port}")
