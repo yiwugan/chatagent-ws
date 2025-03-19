@@ -12,7 +12,7 @@ APP_API_PORT= os.getenv("APP_API_PORT", 8002)
 APP_API_KEY=os.getenv("APP_API_KEY", "")
 
 # dev pr production
-APP_ENV = os.getenv("APP_ENV", "production")
+APP_ENV = os.getenv("APP_ENV", "dev")
 APP_LOG_LEVEL = os.getenv("APP_LOG_LEVEL", "INFO")
 APP_LOG_FILE_PATH = os.getenv("APP_LOG_FILE_PATH", "./logs")
 APP_LOG_FILE_ENABLED = os.getenv("APP_LOG_FILE_ENABLED", True)
