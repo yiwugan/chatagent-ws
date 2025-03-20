@@ -76,7 +76,7 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Copy the source code
 COPY main.py .
-COPY src/chatagent_api/ ./src/chatagent_api/
+COPY src/chatagent_ws/ ./src/chatagent_ws/
 
 # Create non-root user
 RUN useradd -m -r appuser && chown appuser:appuser /app && \
