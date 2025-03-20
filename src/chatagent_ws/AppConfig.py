@@ -1,11 +1,17 @@
 # config.py
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 APP_NAME = os.getenv("APP_NAME", "chatagent_ws")
 APP_VERSION = os.getenv("APP_VERSION", "0.1.0")
 
+# APP_WS_HOST= os.getenv("APP_WS_HOST", "0.0.0.0")
 APP_WS_PORT= os.getenv("APP_WS_PORT", 8001)
 APP_WS_API_KEY=os.getenv("APP_WS_API_KEY", "")
+APP_WS_TIMEOUT_SECONDS=os.getenv("APP_WS_TIMEOUT_SECONDS", 600)
 
 APP_API_HOST= os.getenv("APP_API_HOST", "localhost")
 APP_API_PORT= os.getenv("APP_API_PORT", 8002)
@@ -13,7 +19,7 @@ APP_API_KEY=os.getenv("APP_API_KEY", "")
 
 # dev pr production
 APP_ENV = os.getenv("APP_ENV", "dev")
-APP_LOG_LEVEL = os.getenv("APP_LOG_LEVEL", "INFO")
+APP_LOG_LEVEL = os.getenv("APP_LOG_LEVEL", "DEBUG")
 APP_LOG_FILE_PATH = os.getenv("APP_LOG_FILE_PATH", "./logs")
 APP_LOG_FILE_ENABLED = os.getenv("APP_LOG_FILE_ENABLED", True)
 
@@ -21,3 +27,10 @@ APP_LOG_FILE_ENABLED = os.getenv("APP_LOG_FILE_ENABLED", True)
 APP_CONNECTION_MAX_SESSIONS_PER_IP=os.getenv("APP_CONNECTION_MAX_SESSIONS_PER_IP", 5)
 APP_CONNECTION_MAX_REQUESTS_PER_MINUTE=os.getenv("APP_CONNECTION_MAX_REQUESTS_PER_MINUTE", 10)
 APP_SECURITY_TOKEN_EXPIRY_SECONDS=os.getenv("APP_SECURITY_TOKEN_EXPIRY_SECONDS", 30)
+
+APP_REDIS_HOST=os.getenv("APP_REDIS_HOST", "localhost")
+APP_REDIS_PORT=os.getenv("APP_REDIS_PORT", 6379)
+APP_REDIS_DB=os.getenv("APP_REDIS_DB", 0)
+APP_REDIS_PASSWORD=os.getenv("APP_REDIS_PASSWORD", None)
+APP_REDIS_CHAT_HISTORY_EXPIRE_SECONDS=os.getenv("APP_REDIS_CHAT_HISTORY_EXPIRE_SECONDS", 86400)
+

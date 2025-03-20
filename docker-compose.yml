@@ -15,14 +15,8 @@ services:
       - .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"] # Healthcheck endpoint
+      test: ["CMD", "curl", "-f", "http://localhost:8001/docs"] # Healthcheck endpoint
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
-    networks:
-      - chatagent-ws-network
-
-networks:
-  chatagent-ws-network:
-    driver: bridge
