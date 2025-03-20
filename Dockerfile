@@ -90,7 +90,8 @@ ENV PYTHONUNBUFFERED=1 \
     APP_API_PORT=8002 \
     APP_LOG_LEVEL="INFO" \
     APP_LOG_FILE_PATH="/app/logs" \
-    APP_LOG_FILE_ENABLED=True
+    APP_LOG_FILE_ENABLED=True \
+    APP_ENV=prod
 
 # Expose the port FastAPI will run on
 EXPOSE 8002

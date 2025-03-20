@@ -29,7 +29,7 @@ from src.chatagent_ws.AppConfig import (
     APP_REDIS_HOST,
     APP_REDIS_PORT,
     APP_REDIS_DB,
-    APP_REDIS_PASSWORD, APP_WS_TIMEOUT_SECONDS
+    APP_REDIS_PASSWORD, APP_WS_TIMEOUT_SECONDS, APP_WS_ALLOWED_ORIGIN
 )
 
 from src.chatagent_ws.LoggingUtil import *
@@ -76,13 +76,17 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+allowed_origins = [
+    APP_WS_ALLOWED_ORIGIN,  # Explicitly allow your client origin
+    "http://localhost:8000",     # For local development (optional)
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=allowed_origins,  # List of trusted origins
+    allow_credentials=True,         # Allow cookies/credentials
+    allow_methods=["*"],            # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"],            # Allow all headers (e.g., x-api-key)
 )
 
 # Rate limiting configuration

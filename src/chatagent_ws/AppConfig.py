@@ -13,6 +13,8 @@ APP_WS_PORT= os.getenv("APP_WS_PORT", 8001)
 APP_WS_API_KEY=os.getenv("APP_WS_API_KEY", "")
 APP_WS_TIMEOUT_SECONDS=os.getenv("APP_WS_TIMEOUT_SECONDS", 600)
 
+APP_WS_ALLOWED_ORIGIN=os.getenv("APP_WS_ALLOWED_ORIGIN", "https://localhost")
+
 APP_API_HOST= os.getenv("APP_API_HOST", "localhost")
 APP_API_PORT= os.getenv("APP_API_PORT", 8002)
 APP_API_KEY=os.getenv("APP_API_KEY", "")
