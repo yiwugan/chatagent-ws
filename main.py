@@ -210,7 +210,9 @@ async def get_bot_response(user_message: str, session_id: str) -> AIResponse:
         "x-api-key": APP_API_KEY
     }
     api_url = f"http://{APP_API_HOST}:{APP_API_PORT}/api/chat"
+    logger.debug(f"api_url: {api_url}")
     payload = {"message": user_message, "session_id": session_id}
+    logger.debug(f"payload: {payload}")
 
     try:
         async with aiohttp.ClientSession() as session:
