@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat Agent</title>
+</head>
+<body>
+  <button id="startButton">Start Chat</button>
+  <button id="stopButton" disabled>Stop Chat</button>
+  <div id="output"></div>
+  <select id="voiceSelect">
+    <option value="en-US-Standard-B">US Female Standard</option>
+    <option value="en-US-Chirp3-HD-Aoede">US Female (Chirp3)</option>
+    <option value="en-US-Wavenet-D">US Male (Wavenet D)</option>
+    <option value="en-GB-Wavenet-A">UK Female (Wavenet A)</option>
+  </select>
+  <script>
+    let ws;
+    let recognition;
+    let lastBotResponse = "";
+    let isSpeaking = false;
+    let isListening = false;
+    let audioElement = null;
+    let audioQueue = [];
+    let sessionToken = null;
+    let tokenRefreshInterval = null;
+
+    const API_BASE_URL = "http://127.0.0.1:8001";
+    const WS_URL = "ws://127.0.0.1:8001/speech-ws";
+    const API_KEY = "local123"; // Replace with actual API key
+
+    function similarity(str1, str2) {
+      const words1 = str1.toLowerCase().split(/\s+/);
+      const words2 = str2.toLowerCase().split(/\s+/);
+      const set1 = new Set(words1);
+      const set2 = new Set(words2);
+      let common = 0;
+      set1.forEach(word => {
+        if (set2.has(word)) common++;
+      });
+      return common / Math.max(set1.size, set2.size);
+    }
+
+    async function getSessionToken() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/get_session_token`, {
+          method: "POST",
+          headers: {
+            "x-api-key": API_KEY,
+            "Content-Type": "application/json"
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        sessionToken = data.session_token;
+        connectionSessionToken = data.session_token;
+        console.log("Session token obtained:", sessionToken);
+        updateOutput("Session established");
+        const refreshTime = (data.expires_in - 60) * 1000;
+        tokenRefreshInterval = setInterval(refreshSessionToken, refreshTime);
+        return true;
+      } catch (error) {
+        console.error("Failed to get session token:", error);
+        updateOutput(`Error: Failed to authenticate - ${error.message}`);
+        return false;
+      }
+    }
+
+    async function refreshSessionToken() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/refresh_session_token`, {
+          method: "POST",
+          headers: {
+            "x-api-key": API_KEY,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ current_token: sessionToken })
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        sessionToken = data.session_token;
+        console.log("Session token refreshed");
+      } catch (error) {
+        console.error("Failed to refresh session token:", error);
+        updateOutput("Error: Session refresh failed - reconnecting...");
+        stopChat();
+        document.getElementById("startButton").click();
+      }
+    }
+
+    function setupWebSocket() {
+      ws = new WebSocket(WS_URL+"?session_token="+sessionToken); // Token is sent in message, not URL
+
+      ws.onopen = () => {
+        console.log("WebSocket connected");
+        const voiceSelect = document.getElementById("voiceSelect");
+        const selectedVoice = voiceSelect.value;
+        ws.send(JSON.stringify({
+          type: "userInput",
+          text: "hi",
+          voice: selectedVoice,
+          session_token: sessionToken // Added session_token as required by server
+        }));
+        updateOutput("Sent initial 'hi' message");
+      };
+
+      ws.onmessage = handleMessage;
+
+      ws.onclose = (event) => {
+        console.log("WebSocket closed:", event.code, event.reason);
+        updateOutput("WebSocket connection closed");
+        cleanupWebSocket();
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        updateOutput("WebSocket error occurred");
+        cleanupWebSocket();
+      };
+    }
+
+    function cleanupWebSocket() {
+      ws = null;
+      if (tokenRefreshInterval) {
+        clearInterval(tokenRefreshInterval);
+        tokenRefreshInterval = null;
+      }
+      sessionToken = null;
+    }
+
+    function handleMessage(event) {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("Received message:", data);
+
+        if (data.type === "response_chunk") {
+          lastBotResponse += data.text + " ";
+          updateOutput(`Bot: ${data.text}`);
+        } else if (data.type === "audio_chunk") {
+          const audioData = data.audio;
+          try {
+            const blob = base64ToBlob(audioData, 'audio/mp3');
+            const url = URL.createObjectURL(blob);
+            audioQueue.push(url);
+            if (!isSpeaking) {
+              playNextAudio();
+            }
+          } catch (error) {
+            console.error("Error creating audio blob:", error);
+            updateOutput(`Error creating audio: ${error.message}`);
+          }
+        } else if (data.type === "response_end") {
+          console.log("End of response received");
+          if (!isSpeaking && document.getElementById("startButton").disabled) {
+            startListening();
+          }
+        } else if (data.type === "stream_error") {
+          console.error("Server error:", data.text);
+          updateOutput(`Error: ${data.text}`);
+          if (data.text.includes("invalid or expired")) {
+            // Token validation failed, try to refresh and reconnect
+            refreshSessionToken().then(() => {
+              if (sessionToken) {
+                setupWebSocket();
+              }
+            });
+          } else if (!isSpeaking && isListening) {
+            startListening();
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing message:", error);
+        updateOutput(`Error parsing message: ${error.message}`);
+      }
+    }
+
+    function base64ToBlob(base64, mimeType) {
+      const bytes = atob(base64);
+      const byteNumbers = new Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) {
+        byteNumbers[i] = bytes.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      return new Blob([byteArray], { type: mimeType });
+    }
+
+    function playNextAudio() {
+      if (audioQueue.length === 0) {
+        isSpeaking = false;
+        if (document.getElementById("startButton").disabled) {
+          startListening();
+        }
+        return;
+      }
+
+      isSpeaking = true;
+      if (recognition) recognition.stop();
+
+      if (!audioElement) {
+        audioElement = new Audio();
+        audioElement.volume = 1.0;
+      }
+
+      audioElement.src = audioQueue.shift();
+      audioElement.onended = () => {
+        console.log("Audio playback ended");
+        URL.revokeObjectURL(audioElement.src);
+        playNextAudio();
+      };
+      audioElement.onerror = (err) => {
+        console.error("Audio playback error:", err);
+        isSpeaking = false;
+        audioQueue = [];
+        URL.revokeObjectURL(audioElement.src);
+        if (document.getElementById("startButton").disabled) {
+          startListening();
+        }
+      };
+      audioElement.play().catch(err => {
+        console.error("Audio play error:", err);
+        updateOutput(`Error: Audio playback failed - ${err.message}`);
+        isSpeaking = false;
+        audioQueue = [];
+        if (document.getElementById("startButton").disabled) {
+          startListening();
+        }
+      });
+    }
+
+    async function setupSpeechRecognition() {
+      try {
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = true;
+        recognition.interimResults = false;
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[event.results.length - 1][0].transcript.trim();
+          console.log("User said:", transcript);
+          handleUserSpeech(transcript);
+        };
+
+        recognition.onstart = () => {
+          console.log("Speech recognition started");
+          isListening = true;
+          updateOutput("Listening...");
+        };
+
+        recognition.onend = () => {
+          console.log("Speech recognition ended");
+          isListening = false;
+          if (!isSpeaking && document.getElementById("startButton").disabled) {
+            startListening();
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.error("Speech recognition error:", event.error);
+          isListening = false;
+          updateOutput(`Speech recognition error: ${event.error}`);
+          if (document.getElementById("startButton").disabled) {
+            startListening();
+          }
+        };
+      } catch (error) {
+        console.error("Error setting up speech recognition:", error);
+        updateOutput(`Error setting up speech recognition: ${error.message}`);
+        recognition = null;
+      }
+    }
+
+    function startListening() {
+      if (recognition && !isListening && !isSpeaking) {
+        try {
+          recognition.start();
+          console.log("Attempting to start listening");
+        } catch (e) {
+          console.error("Error starting recognition:", e);
+          updateOutput(`Error: Failed to start speech recognition - ${e.message}`);
+        }
+      }
+    }
+
+    function handleUserSpeech(transcript) {
+      if (isSpeaking) {
+        console.log("Speaking in progress, waiting...");
+        return;
+      }
+      if (lastBotResponse && similarity(lastBotResponse, transcript) > 0.7) {
+        console.log("Detected bot echo, ignoring:", transcript);
+        return;
+      }
+      lastBotResponse = "";
+      const voiceSelect = document.getElementById("voiceSelect");
+      const selectedVoice = voiceSelect.value;
+      updateOutput(`You: ${transcript}`);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: "userInput",
+          text: transcript,
+          voice: selectedVoice,
+          session_token: sessionToken // Added session_token as required by server
+        }));
+      } else {
+        console.warn("WebSocket not connected");
+        updateOutput("Warning: Not connected to chat server. Please restart.");
+      }
+    }
+
+    function stopChat() {
+      isSpeaking = false;
+      isListening = false;
+
+      if (recognition) {
+        recognition.stop();
+        recognition.onresult = null;
+        recognition.onstart = null;
+        recognition.onend = null;
+        recognition.onerror = null;
+        recognition = null;
+      }
+      if (ws) {
+        ws.close();
+        cleanupWebSocket();
+      }
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.src = '';
+        audioElement.onended = null;
+        audioElement.onerror = null;
+        audioElement = null;
+      }
+      audioQueue.forEach(url => URL.revokeObjectURL(url));
+      audioQueue = [];
+      if (tokenRefreshInterval) {
+        clearInterval(tokenRefreshInterval);
+        tokenRefreshInterval = null;
+      }
+      sessionToken = null;
+      document.getElementById("startButton").disabled = false;
+      document.getElementById("stopButton").disabled = true;
+      updateOutput("Chat stopped");
+    }
+
+    function updateOutput(text) {
+      const output = document.getElementById("output");
+      output.innerText += `\n${text}`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    document.getElementById("startButton").onclick = async () => {
+      const authenticated = await getSessionToken();
+      if (!authenticated) return;
+
+      setupWebSocket();
+      await setupSpeechRecognition();
+      startListening();
+      document.getElementById("startButton").disabled = true;
+      document.getElementById("stopButton").disabled = false;
+      updateOutput("Chat started");
+    };
+
+    document.getElementById("stopButton").onclick = () => {
+      stopChat();
+    };
+  </script>
+</body>
+</html>

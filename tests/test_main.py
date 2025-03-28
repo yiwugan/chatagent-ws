@@ -1,10 +1,9 @@
-import asyncio
 import json
 import pytest
 import websockets
 from httpx import AsyncClient
 from fastapi import status
-from main import app, APP_WS_HOST, APP_WS_PORT, APP_WS_API_KEY, APP_CONNECTION_MAX_REQUESTS_PER_MINUTE
+from chatagent_ws.main import app, APP_WS_HOST, APP_WS_PORT, APP_WS_API_KEY, APP_CONNECTION_MAX_REQUESTS_PER_MINUTE
 
 # Mark the module as requiring asyncio
 pytestmark = pytest.mark.asyncio

@@ -29,8 +29,8 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages/ /usr/local/lib/pyth
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Copy the source code
-COPY main.py .
-COPY src/chatagent_ws/ ./src/chatagent_ws/
+COPY chatagent_ws/main.py .
+COPY chatagent_ws/ ./src/chatagent_ws/
 
 # Create non-root user
 RUN useradd -m -r appuser && chown appuser:appuser /app && \

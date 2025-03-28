@@ -2,7 +2,7 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 
-from .AppConfig import APP_LOG_LEVEL, APP_LOG_FILE_ENABLED, APP_LOG_FILE_PATH
+from chatagent_ws.AppConfig import APP_LOG_LEVEL, APP_LOG_FILE_ENABLED, APP_LOG_FILE_PATH
 
 
 def get_logger(name):
