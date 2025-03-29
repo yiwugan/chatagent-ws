@@ -8,18 +8,18 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 
-from chatagent_ws.LoggingUtil import get_logger
-from chatagent_ws.session_manager import session_redis_client, generate_session_token, verify_api_key, validate_token
-from chatagent_ws.AppConfig import (
-    APP_CONNECTION_MAX_SESSIONS_PER_IP,
+from logging_util import get_logger
+from session_manager import session_redis_client, generate_session_token, verify_api_key, validate_token, \
+    get_client_ip_from_request
+from app_config import (
     APP_SECURITY_TOKEN_EXPIRY_SECONDS,
     APP_WS_PORT,
     APP_ENV,
     APP_WS_TIMEOUT_SECONDS,
     APP_WS_ALLOWED_ORIGIN
 )
-from chatagent_ws.ws_speech import websocket_speech_endpoint
-from chatagent_ws.ws_text import websocket_text_endpoint
+from ws_speech import websocket_speech_endpoint
+from ws_text import websocket_text_endpoint
 
 load_dotenv()
 logger = get_logger("main")
@@ -66,7 +66,7 @@ app.websocket("/text-ws")(websocket_text_endpoint)
 
 @app.post("/api/get_session_token")
 async def get_session_token(request: Request, api_key: str = Depends(verify_api_key)) -> Dict[str, str | int]:
-    client_ip = request.client.host
+    client_ip = get_client_ip_from_request(request)
     session_count_key = f"session/ip:{client_ip}"
 
     try:
@@ -94,7 +94,7 @@ async def refresh_session_token(
         current_token: str = Body(..., embed=True),
         api_key: str = Depends(verify_api_key)
 ) -> Dict[str, str | int]:
-    client_ip = request.client.host
+    client_ip = get_client_ip_from_request(request)
     session_count_key = f"session/ip:{client_ip}"
 
     try:

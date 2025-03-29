@@ -7,15 +7,16 @@ import redis.asyncio as redis
 import time
 from dotenv import load_dotenv
 from fastapi import HTTPException, Header, Request
+from starlette.websockets import WebSocket
 
-from chatagent_ws.AppConfig import (
+from app_config import (
     APP_CONNECTION_MAX_SESSIONS_PER_IP,
     APP_CONNECTION_MAX_REQUESTS_PER_MINUTE,
     APP_WS_API_KEY
 )
-from chatagent_ws.AppConfig import APP_REDIS_HOST, APP_REDIS_PORT, APP_REDIS_DB, APP_REDIS_PASSWORD, \
+from app_config import APP_REDIS_HOST, APP_REDIS_PORT, APP_REDIS_DB, APP_REDIS_PASSWORD, \
     APP_SECURITY_TOKEN_EXPIRY_SECONDS
-from chatagent_ws.LoggingUtil import get_logger
+from logging_util import get_logger
 
 load_dotenv()
 logger = get_logger("session_manager")
@@ -29,6 +30,33 @@ session_redis_client = redis.Redis(
     decode_responses=True
 )
 
+def get_client_ip_from_websocket(websocket: WebSocket):
+    try:
+        request = websocket._scope.get("request") or websocket.scope
+        client_ip = request.headers.get("X-Forwarded-For")
+        if client_ip:
+            # X-Forwarded-For may contain a comma-separated list (client IP is first)
+            client_ip = client_ip.split(",")[0].strip()
+        else:
+            # Fallback to direct client host if header is missing (unlikely with ALB)
+            client_ip = "unknown"
+        return client_ip
+    except Exception as e:
+        return "unknown"
+
+
+def get_client_ip_from_request(request:Request):
+    try:
+        client_ip = request.headers.get("X-Forwarded-For")
+        if client_ip:
+            # X-Forwarded-For may contain a comma-separated list (client IP is first)
+            client_ip = client_ip.split(",")[0].strip()
+        else:
+            # Fallback to direct client host if header is missing (unlikely with ALB)
+            client_ip = "unknown"
+        return client_ip
+    except Exception as e:
+        return "unknown"
 
 async def generate_session_token(session_id: str, client_ip: str) -> str:
     token = secrets.token_urlsafe(32)

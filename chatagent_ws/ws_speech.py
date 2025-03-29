@@ -12,9 +12,9 @@ from google.cloud import texttospeech
 from httpx import AsyncClient, TimeoutException, RequestError, HTTPStatusError
 from nltk.tokenize import sent_tokenize
 
-from chatagent_ws.AppConfig import APP_API_HOST, APP_API_PORT, APP_WS_IDLE_TIMEOUT_SECONDS, APP_SPEECH_GOOGLE_VOICE
-from chatagent_ws.LoggingUtil import get_logger
-from chatagent_ws.session_manager import validate_token, check_rate_limits
+from app_config import APP_API_HOST, APP_API_PORT, APP_WS_IDLE_TIMEOUT_SECONDS, APP_SPEECH_GOOGLE_VOICE
+from logging_util import get_logger
+from session_manager import validate_token, check_rate_limits, get_client_ip_from_websocket
 
 load_dotenv()
 
@@ -209,7 +209,7 @@ async def websocket_speech_endpoint(websocket: WebSocket):
             await websocket.close(code=1002, reason="Missing session token")
             return
 
-        client_ip = websocket.client.host if websocket.client else "unknown"
+        client_ip = get_client_ip_from_websocket(websocket)
         is_valid, session_id = await validate_token(connection_session_token, client_ip)
         if not is_valid:
             await websocket.send_json({
@@ -242,7 +242,7 @@ async def websocket_speech_endpoint(websocket: WebSocket):
                         "text": "Missing session_token"
                     })
                     continue
-                client_ip = websocket.client.host if websocket.client else "unknown"
+                client_ip = get_client_ip_from_websocket(websocket)
                 is_valid, session_id = await validate_token(session_token, client_ip)
                 if not is_valid:
                     await websocket.send_json({
