@@ -2,7 +2,7 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 
-from chatagent_ws.AppConfig import APP_LOG_LEVEL, APP_LOG_FILE_ENABLED, APP_LOG_FILE_PATH
+from AppConfig import APP_LOG_LEVEL, APP_LOG_FILE_ENABLED, APP_LOG_FILE_PATH
 
 
 def get_logger(name):
@@ -19,11 +19,15 @@ def get_logger(name):
             try:
                 if not os.path.isdir(APP_LOG_FILE_PATH):
                     os.makedirs(APP_LOG_FILE_PATH, exist_ok=True)
-                file_handler = RotatingFileHandler(f"{APP_LOG_FILE_PATH}/chatagent-ws.log", maxBytes=10485760, backupCount=5)
+                file_handler = RotatingFileHandler(
+                    f"{APP_LOG_FILE_PATH}/chatagent-ws.log",
+                    maxBytes=10485760,
+                    backupCount=5,
+                    encoding='utf-8'  # Add encoding for file handler
+                )
                 file_handler.setFormatter(formatter)
                 logger.addHandler(file_handler)
             except Exception as e:
                 print(f"Error to create file logger: {e}")
 
     return logger
-

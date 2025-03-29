@@ -250,13 +250,7 @@ async def websocket_speech_endpoint(websocket: WebSocket):
                         "text": "Session_token invalid or expired"
                     })
                     continue
-                is_in_ratelimit, result = await check_rate_limits(client_ip, session_token)
-                if not is_in_ratelimit:
-                    await websocket.send_json({
-                        "type": "stream_error",
-                        "text": f"{result}"
-                    })
-                    continue
+
                 await process_input(message, websocket, session_id)
     except WebSocketDisconnect:
         logger.info("websocket_speech_endpoint disconnected by client")

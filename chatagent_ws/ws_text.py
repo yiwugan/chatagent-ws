@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 from typing import AsyncIterator, Optional, Dict
+from urllib.parse import parse_qs
 
 import nltk
 from dotenv import load_dotenv
@@ -70,23 +71,17 @@ async def call_api(
                     headers=default_headers,
                     timeout=timeout,
             ) as response:
+                logger.info("receiving from streaming API")
                 response.raise_for_status()
                 async for chunk in response.aiter_text():
+                    logger.info(f"receiving from streaming API {chunk}")
                     yield chunk
+                logger.info(f"receiving from streaming API done")
         except (TimeoutException, RequestError, HTTPStatusError) as e:
             logger.error(f"API call failed: {e}")
             raise
 
-
 async def process_input(user_input: str, websocket: WebSocket, session_id: str):
-    """
-    Processes the user input, handling errors and streaming the response.
-
-    Args:
-        user_input: The input text from the user.
-        websocket: The WebSocket connection object.
-        session_id: The session ID.
-    """
     logger.info("Processing input")
     if len(user_input) > MAX_INPUT_SIZE:
         await websocket.send_json({
@@ -108,40 +103,55 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
     try:
         buffer = ""
         async for chunk in call_api(text_input, session_id):
-            if len(buffer) + len(chunk) > MAX_BUFFER_SIZE:
-                logger.error("Buffer size exceeded")
-                await websocket.send_json({
-                    "type": "stream_error",
-                    "text": "Response too large"
-                })
-                return
+            logger.info(f"receiving from streaming API {chunk}")
+            # if len(buffer) + len(chunk) > MAX_BUFFER_SIZE:
+            #     logger.error("Buffer size exceeded")
+            #     await websocket.send_json({
+            #         "type": "stream_error",
+            #         "text": "Response too large"
+            #     })
+            #     return
+            #
+            # buffer += chunk
 
+            # Send chunks as they come, respecting sentence boundaries
             if chunk == "[DONE]":
-                if buffer.strip():
-                    await websocket.send_json({
-                        "type": "response_chunk",
-                        "text": buffer.strip(),
-                        "session_id": session_id
-                    })
+                # if buffer.strip():
+                #     # Remove [DONE] and send final buffer
+                #     buffer = buffer.replace("[DONE]", "").strip()
+                #     if buffer:
+                #         await websocket.send_json({
+                #             "type": "response_chunk",
+                #             "text": buffer,
+                #             "session_id": session_id
+                #         })
+                await websocket.send_json({"type": "response_end"})
                 break
             elif "Error:" in chunk:
                 await websocket.send_json({"type": "stream_error", "text": chunk})
                 return
             else:
-                buffer += chunk
-                sentences = sent_tokenize(buffer)
-                if len(sentences) > 1 or (sentences and chunk.endswith(('. ', '? ', '! '))):
-                    await websocket.send_json({
-                        "type": "response_chunk",
-                        "text": sentences[0].strip(),
-                        "session_id": session_id
-                    })
-                    buffer = sentences[-1]
+                # send chunk directly
+                await websocket.send_json({
+                    "type": "response_chunk",
+                    "text": chunk,
+                    "session_id": session_id
+                })
 
-        await websocket.send_json({"type": "response_end"})
+                # Send complete sentences when possible
+                # sentences = sent_tokenize(buffer)
+                # for i, sentence in enumerate(sentences[:-1]):  # All but the last (incomplete) sentence
+                #     await websocket.send_json({
+                #         "type": "response_chunk",
+                #         "text": sentence.strip(),
+                #         "session_id": session_id
+                #     })
+                # buffer = sentences[-1] if sentences else buffer  # Keep incomplete sentence
+
     except Exception as e:
         logger.error(f"Processing error: {e}")
         await websocket.send_json({"type": "stream_error", "text": str(e)})
+
 
 
 async def websocket_text_endpoint(websocket: WebSocket):
@@ -177,6 +187,40 @@ async def websocket_text_endpoint(websocket: WebSocket):
     idle_check_task = asyncio.create_task(check_idle())
 
     try:
+        # session token at connection may be different from token in payload
+        # since token may be expired and refreshed during connection
+        connection_session_token = parse_qs(websocket.url.query).get("session_token", [None])[0]
+
+        if not connection_session_token:
+            await websocket.send_json({
+                "type": "stream_error",
+                "text": "Missing session_token"
+            })
+            await websocket.close(code=1002, reason="Missing session token")
+            return
+
+        client_ip = websocket.client.host if websocket.client else "unknown"
+        is_valid, session_id = await validate_token(connection_session_token, client_ip)
+        if not is_valid:
+            await websocket.send_json({
+                "type": "stream_error",
+                "text": "Session_token invalid or expired"
+            })
+            await websocket.close(code=1002, reason="Invalid session token")
+            return
+
+        is_in_ratelimit, result = await check_rate_limits(client_ip, connection_session_token)
+        if not is_in_ratelimit:
+            await websocket.send_json({
+                "type": "stream_error",
+                "text": f"{result}"
+            })
+            await websocket.close(code=1002, reason="Rate limit exceeded")
+            return
+
+        # Send a message to the client to indicate successful connection and session validation
+        #        await websocket.send_json({"type": "connection_success", "session_id": session_id})
+
         while True:
             message = await websocket.receive_text()
             last_activity = asyncio.get_event_loop().time()  # update last_activity
@@ -197,13 +241,7 @@ async def websocket_text_endpoint(websocket: WebSocket):
                         "text": "Session_token invalid or expired"
                     })
                     continue
-                is_in_ratelimit, result = await check_rate_limits(client_ip, session_token)
-                if not is_in_ratelimit:
-                    await websocket.send_json({
-                        "type": "stream_error",
-                        "text": f"{result}"
-                    })
-                    continue
+
                 await process_input(message, websocket, session_id)
     except WebSocketDisconnect:
         logger.info("websocket_text_endpoint disconnected by client")

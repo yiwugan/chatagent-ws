@@ -70,13 +70,6 @@ async def get_session_token(request: Request, api_key: str = Depends(verify_api_
     session_count_key = f"session/ip:{client_ip}"
 
     try:
-        session_count = await session_redis_client.get(session_count_key)
-        session_count = int(session_count or 0)
-
-        if session_count >= APP_CONNECTION_MAX_SESSIONS_PER_IP:
-            logger.info(f"AUDIT: Exceeded {APP_CONNECTION_MAX_SESSIONS_PER_IP} sessions from IP {client_ip}")
-            raise HTTPException(status_code=429, detail="Too many sessions from this IP")
-
         session_id = str(uuid.uuid4())
         token = await generate_session_token(session_id, client_ip)
 
@@ -86,7 +79,6 @@ async def get_session_token(request: Request, api_key: str = Depends(verify_api_
         return {
             "session_token": token,
             "expires_in": APP_SECURITY_TOKEN_EXPIRY_SECONDS
-            # "session_id": session_id
         }
     except redis.RedisError as e:
         logger.error(f"Redis access failed: {e}")
@@ -115,14 +107,6 @@ async def refresh_session_token(
             logger.info(f"AUDIT: Invalid token refresh attempt from IP {client_ip}: {e}")
             raise HTTPException(status_code=401, detail="Invalid or expired session token")
 
-        # Check session count
-        session_count = await session_redis_client.get(session_count_key)
-        session_count = int(session_count or 0)
-
-        if session_count > APP_CONNECTION_MAX_SESSIONS_PER_IP:
-            logger.info(f"AUDIT: Exceeded {APP_CONNECTION_MAX_SESSIONS_PER_IP} sessions from IP {client_ip}")
-            raise HTTPException(status_code=429, detail="Too many sessions from this IP")
-
         # Generate new token with existing session_id
         new_token = await generate_session_token(session_id, client_ip)
 
@@ -132,7 +116,6 @@ async def refresh_session_token(
         return {
             "session_token": new_token,
             "expires_in": APP_SECURITY_TOKEN_EXPIRY_SECONDS
-            # "session_id": session_id
         }
     except HTTPException as e:
         raise e

@@ -59,10 +59,12 @@ async def check_rate_limits(client_ip: str, session_id: str) -> tuple[bool, str]
     await session_redis_client.expire(key, 60)
 
     session_count = await session_redis_client.get(f"session/ip:{client_ip}")
-    if int(session_count or 0) >= APP_CONNECTION_MAX_SESSIONS_PER_IP:
-        return False, "Too many sessions from this IP"
 
     return True, ""
+    # if int(session_count or 0) >= APP_CONNECTION_MAX_SESSIONS_PER_IP:
+    #     return False, "Too many sessions from this IP"
+    #
+    # return True, ""
 
 
 async def validate_token(token: str, client_ip: str) -> tuple[bool, str]:
