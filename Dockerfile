@@ -29,8 +29,7 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages/ /usr/local/lib/pyth
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Copy the source code
-COPY chatagent_ws/main.py .
-COPY chatagent_ws/ ./src/chatagent_ws/
+COPY chatagent_ws/ ./chatagent_ws/
 
 # Create non-root user
 RUN useradd -m -r appuser && chown appuser:appuser /app && \
@@ -48,4 +47,4 @@ EXPOSE 8001
 
 # Command to run the FastAPI app with uvicorn
 # CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002", "--workers", "2", "--timeout-keep-alive", "30", "--timeout-graceful-shutdown", "10"]
-CMD ["python3", "main.py"]
+CMD ["python3", "chatagent_ws/main.py"]
