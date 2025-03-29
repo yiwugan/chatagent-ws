@@ -32,8 +32,8 @@ session_redis_client = redis.Redis(
 
 def get_client_ip_from_websocket(websocket: WebSocket):
     try:
-        request = websocket._scope.get("request") or websocket.scope
-        client_ip = request.headers.get("X-Forwarded-For")
+        headers = dict(websocket.scope["headers"])
+        client_ip = headers.get("X-Forwarded-For")
         if client_ip:
             # X-Forwarded-For may contain a comma-separated list (client IP is first)
             client_ip = client_ip.split(",")[0].strip()
