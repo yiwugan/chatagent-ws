@@ -8,8 +8,8 @@ services:
     container_name: chatagent-ws
     ports:
       - "8001:8001" # Maps host port 8001 to container port 8001
-    volumes: []
-#      - .:/app # Mounts the local directory to /app in the container
+    volumes:
+      - /home/ec2-user/work/chatagent-ws/gcp-cred.json:/app/gcp-cred.json
     environment: []
     env_file:
       - .env
