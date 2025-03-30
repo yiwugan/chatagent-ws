@@ -74,19 +74,20 @@ async def generate_session_token(session_id: str, client_ip: str) -> str:
 
 
 async def check_rate_limits(client_ip: str, session_id: str) -> tuple[bool, str]:
-    current_time = time.time()
-    key = f"session/rate:{session_id}"
+    # disable rate limit since cant get web socket client ip
+    # current_time = time.time()
+    # key = f"session/rate:{session_id}"
+    #
+    # await session_redis_client.zremrangebyscore(key, 0, current_time - 60)
+    # count = await session_redis_client.zcard(key)
 
-    await session_redis_client.zremrangebyscore(key, 0, current_time - 60)
-    count = await session_redis_client.zcard(key)
+    # if count >= APP_CONNECTION_MAX_REQUESTS_PER_MINUTE:
+    #     return False, "Rate limit exceeded"
 
-    if count >= APP_CONNECTION_MAX_REQUESTS_PER_MINUTE:
-        return False, "Rate limit exceeded"
-
-    await session_redis_client.zadd(key, {str(current_time): current_time})
-    await session_redis_client.expire(key, 60)
-
-    session_count = await session_redis_client.get(f"session/ip:{client_ip}")
+    # await session_redis_client.zadd(key, {str(current_time): current_time})
+    # await session_redis_client.expire(key, 60)
+    #
+    # session_count = await session_redis_client.get(f"session/ip:{client_ip}")
 
     return True, ""
     # if int(session_count or 0) >= APP_CONNECTION_MAX_SESSIONS_PER_IP:
@@ -102,9 +103,9 @@ async def validate_token(token: str, client_ip: str) -> tuple[bool, str]:
         return False, "Invalid token"
 
     token_info = json.loads(token_data)
-    if token_info["ip"] != client_ip:
-        logger.warning(f"AUDIT: Token IP mismatch for {token} from IP {client_ip}")
-        return False, "Token IP mismatch"
+    # if token_info["ip"] != client_ip:
+    #     logger.warning(f"AUDIT: Token IP mismatch for {token} from IP {client_ip}")
+    #     return False, "Token IP mismatch"
     if datetime.fromisoformat(token_info["expiry"]) < datetime.now():
         await session_redis_client.delete(f"session/token:{token}")
         logger.info(f"AUDIT: Token {token} expired from IP {client_ip}")
