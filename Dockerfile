@@ -33,7 +33,7 @@ RUN pip install nltk && \
     python -m nltk.downloader -d /usr/local/share/nltk_data punkt_tab
 
 # Copy the source code
-COPY chatagent_ws/ ./chatagent_ws/
+COPY chatagent_ws/ ./
 
 # Create non-root user
 RUN useradd -m -r appuser && chown appuser:appuser /app && \
@@ -51,4 +51,4 @@ EXPOSE 8001
 
 # Command to run the FastAPI app with uvicorn
 # CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002", "--workers", "2", "--timeout-keep-alive", "30", "--timeout-graceful-shutdown", "10"]
-CMD ["python3", "chatagent_ws/main.py"]
+CMD ["python3", "main.py"]

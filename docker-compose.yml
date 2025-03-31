@@ -10,6 +10,7 @@ services:
       - "8001:8001" # Maps host port 8001 to container port 8001
     volumes:
       - /home/ec2-user/work/chatagent-ws/gcp-cred.json:/app/gcp-cred.json
+      - ./logs:/app/logs
     environment: []
     env_file:
       - .env
