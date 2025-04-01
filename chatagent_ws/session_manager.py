@@ -60,13 +60,14 @@ def get_client_ip_from_request(request:Request):
 
 async def generate_session_token(session_id: str, client_ip: str) -> str:
     token = secrets.token_urlsafe(32)
+    token_key=f"session/token:{token}"
     token_data = {
         "expiry": (datetime.now() + timedelta(seconds=APP_SECURITY_TOKEN_EXPIRY_SECONDS)).isoformat(),
         "session_id": session_id,
         "ip": client_ip
     }
     await session_redis_client.setex(
-        f"session/token:{token}",
+        token_key,
         APP_SECURITY_TOKEN_EXPIRY_SECONDS,
         json.dumps(token_data)
     )
@@ -99,7 +100,7 @@ async def check_rate_limits(client_ip: str, session_id: str) -> tuple[bool, str]
 async def validate_token(token: str, client_ip: str) -> tuple[bool, str]:
     token_data = await session_redis_client.get(f"session/token:{token}")
     if not token_data:
-        logger.warning(f"AUDIT: Invalid token {token} from IP {client_ip}")
+        logger.warning(f"AUDIT: Invalid Or Expired token {token} from IP {client_ip}")
         return False, "Invalid token"
 
     token_info = json.loads(token_data)

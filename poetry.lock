@@ -1568,6 +1568,71 @@ files = [
 pyasn1 = ">=0.4.6,<0.7.0"
 
 [[package]]
+name = "pycld2"
+version = "0.42"
+description = "Python bindings around Google Chromium's embedded compact language detection library (CLD2)"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "pycld2-0.42-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:0770612afeeab2e5ca72889553e8e7850b865f9b3ca7b2a783e2a43fb1792a26"},
+    {file = "pycld2-0.42-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ce384bb927415a60ef69ff07781491e5305b80d4ae995a1948d396b3b22f564c"},
+    {file = "pycld2-0.42-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f6e3460474f1de15932facc444dc2ba9d391fb97b11c0b48eeab15e58488b152"},
+    {file = "pycld2-0.42-cp310-cp310-musllinux_1_2_i686.whl", hash = "sha256:7073d0fe8803045286e96de2c48553f1de32c85ca765108eb379ab871bd4d6e2"},
+    {file = "pycld2-0.42-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:13f3dc267e02710dc8bf4a87a547e24768982a8f415921b54936a2925d45a31d"},
+    {file = "pycld2-0.42-cp310-cp310-win32.whl", hash = "sha256:67b71c0448a0ce48ac60b5c2c1646afbada573f46f027a61bb399e56c1ad18d9"},
+    {file = "pycld2-0.42-cp310-cp310-win_amd64.whl", hash = "sha256:8880f0495845e2646546f369cc2a6897f8c2d0974d4a9639d500fa10f7f28020"},
+    {file = "pycld2-0.42-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:a58b864bca55bc5c751ba5f2520aa1812d0f137b955cb8c057d72e1bff18eaa4"},
+    {file = "pycld2-0.42-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7092c00df1aa822b5acf2258330ecbe7cdc2ce3e8a4474ee8f23483462ebe83c"},
+    {file = "pycld2-0.42-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:1f0964ae7a022698bf7a282f77fda9523ff354c0deaed9e586fbda3bf88d218d"},
+    {file = "pycld2-0.42-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:4afd47e2bc0f4a17962dcf1422dd9b8549637bb3f6d133fb6fea2b127e64e451"},
+    {file = "pycld2-0.42-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:1e3b63ad5fafaa79f64cdf7078e9022b5184a98995a1b9c4533d27f41b3ecdb6"},
+    {file = "pycld2-0.42-cp311-cp311-win32.whl", hash = "sha256:bb8fa132026b08fc4a24b2b964ec318842b966c54d6ad8da84b30fccd5d694ec"},
+    {file = "pycld2-0.42-cp311-cp311-win_amd64.whl", hash = "sha256:dac35607cd16281a64a51b916d219063dd31361ab1e8cb4203b922d535442b22"},
+    {file = "pycld2-0.42-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:e09f7fd7d3543f08b8f5b1e22af7272bf19415ac9f1647ed805e16257a06ce77"},
+    {file = "pycld2-0.42-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1dc9bb56e2c44b3c55857442b3975cca0398c0c31b6ad9138c6f6ab7a2a36f49"},
+    {file = "pycld2-0.42-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f4acb5e8873dd7c5985a7dd16c95a0096bb82adfac9303f92580f4b0cf5053f9"},
+    {file = "pycld2-0.42-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:6f397d70aa46ad13d89db6912fbf3324afe0dc1685cd51db152f2613d7f76b9d"},
+    {file = "pycld2-0.42-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:1e607ba47efd5d81a8ad3a2e5d31dfef35be73c0adfca1cc7f4f2fb795f3209d"},
+    {file = "pycld2-0.42-cp312-cp312-win32.whl", hash = "sha256:81592540410a185c1b01cc10bc200bbe686fa3d868f6f61aa76a93daa3c54d8f"},
+    {file = "pycld2-0.42-cp312-cp312-win_amd64.whl", hash = "sha256:ea73aa77c5f1aa122bb9cfbc568699ca8a2182e0f49bc68c527ca78c62407841"},
+    {file = "pycld2-0.42-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:94b84050081c85f0038369ee4db1bdddc5c8178773809aa55fb4e78b94a3a1c5"},
+    {file = "pycld2-0.42-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f939bfa74347ff931d2bfa7e19b06e1b21ecfcc93769e0ed2db2f36fc4252735"},
+    {file = "pycld2-0.42-cp313-cp313-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5a3676d4c9e258a74fdb6c94e7577c02a99974e41c8641e045a980ade64b818a"},
+    {file = "pycld2-0.42-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:f8d6dedca968b3b64a0bb1e693f67cfed7fe7bd207ab13d4c5b9fd1a27ce9600"},
+    {file = "pycld2-0.42-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:593465e6f79ddb3a4be0c43dda8f0400015124a0f3bfe5cd3741d8d2c371412d"},
+    {file = "pycld2-0.42-cp313-cp313-win32.whl", hash = "sha256:9820d363886177de1cc0886db9cd40629d61261d2896f755d682c71539b5ed5e"},
+    {file = "pycld2-0.42-cp313-cp313-win_amd64.whl", hash = "sha256:3570a6c2d9487fad4c7ac9d36e1537caca9456fccfd23ec1b87d0c7e6a544e5c"},
+    {file = "pycld2-0.42-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4c4a0e6fa28e716b7d68d55254f8831e41115aff940234d7cc5209b93b6bc5ea"},
+    {file = "pycld2-0.42-cp36-cp36m-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:4a3cdab457173a12c622b25d8235b3b1aac63f964fdc9e44e8bd2287a5bfb566"},
+    {file = "pycld2-0.42-cp36-cp36m-musllinux_1_2_i686.whl", hash = "sha256:903f3aa91d36e47560e1deac95a87cd3be11c47980f009bb2276a3657971f6df"},
+    {file = "pycld2-0.42-cp36-cp36m-musllinux_1_2_x86_64.whl", hash = "sha256:09c4088bb6b49092f807d06fa2567bcd6826c896745554cd6316c53cab5d01dc"},
+    {file = "pycld2-0.42-cp36-cp36m-win32.whl", hash = "sha256:bcb222909c21680128d8bb3bc79725f8482ec4924314f802ebff5880a3391664"},
+    {file = "pycld2-0.42-cp36-cp36m-win_amd64.whl", hash = "sha256:f5b5b8d46229f785b5e36126a6d6c2820a6669d62f1c7675e52e4cf8ced2522b"},
+    {file = "pycld2-0.42-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4de7c7e87ee034e9d56c3889a587ed296f0ec34317d778da9238c783cb9e5bce"},
+    {file = "pycld2-0.42-cp37-cp37m-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2bda1b84632097fa9f1f557ae16011b4a8622cafc4cbefb9da631ca655fe1efe"},
+    {file = "pycld2-0.42-cp37-cp37m-musllinux_1_2_i686.whl", hash = "sha256:a6770668c76df5acade9804d199678d54ae91eb746f1b4fe67b77a91a45e3b42"},
+    {file = "pycld2-0.42-cp37-cp37m-musllinux_1_2_x86_64.whl", hash = "sha256:b0257c25cf70de54400bba26ab8660df70a88ffd3aaa1ec2ab9c4e72fda32b7a"},
+    {file = "pycld2-0.42-cp37-cp37m-win32.whl", hash = "sha256:7ca4c99d8f56f89baced57c9d9ee98d26887e68531a91e88993eb772afa1eabe"},
+    {file = "pycld2-0.42-cp37-cp37m-win_amd64.whl", hash = "sha256:3ef01be6ab96bf4be53f3a1e71958ad16d968ffd67b4d24c85c3c1c879eaec69"},
+    {file = "pycld2-0.42-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:e6a3aabdd55f2c9a5607f07c13c8bd5b961639c5cf9add52707fe292fb3aea32"},
+    {file = "pycld2-0.42-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3fdd0f17b8715be8561a0581c717b4e75de39c70f1c8514a140c92954b29b55a"},
+    {file = "pycld2-0.42-cp38-cp38-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:1010f0c989d954893497a81f89f9332e83172f78e412ed6de76777d9a39a2316"},
+    {file = "pycld2-0.42-cp38-cp38-musllinux_1_2_i686.whl", hash = "sha256:00f7dccb76a49d98409b9d6ca6a85b63fee78c809271f8b448637b43233909ab"},
+    {file = "pycld2-0.42-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:09f48f4f24a6ee14802a4d5e85b145ffe626ddc39e6843eee06dc90aa11fb7f0"},
+    {file = "pycld2-0.42-cp38-cp38-win32.whl", hash = "sha256:12ba5201652e0ed97c90fe6d07c05ebb94835ca141ce41c3e80b2b803bb84ee8"},
+    {file = "pycld2-0.42-cp38-cp38-win_amd64.whl", hash = "sha256:c5e62d18e285b4997548972d08470ba9cf776458d3057acbeb8f3e3338ca6463"},
+    {file = "pycld2-0.42-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:ade7b18ce928cfc88367ea829160166a41e4f67557df7a5ace3b2ab5dbbd04e6"},
+    {file = "pycld2-0.42-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b59e7fe448d3af3374b359fb1bfc9ba45e494517abdaee1d8f895d38cc1b3e88"},
+    {file = "pycld2-0.42-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ac5e8188c77bf168e8170a44453f852e49a62a1cee9ddeeafd48b754c86c5fd9"},
+    {file = "pycld2-0.42-cp39-cp39-musllinux_1_2_i686.whl", hash = "sha256:7e7aabfdafe3ee4124ca758dbb357b7c3535e6cc704407f89b76626c17f66d5d"},
+    {file = "pycld2-0.42-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:647359cddd351a29b39c65be4db6559e17574c20c7a25d44f48ed87c80639d62"},
+    {file = "pycld2-0.42-cp39-cp39-win32.whl", hash = "sha256:8953576586d41291a1e755a628159a057f9dda1a3496c9bf098c638e7046de09"},
+    {file = "pycld2-0.42-cp39-cp39-win_amd64.whl", hash = "sha256:e023d60a1ea00fe6a8efa520689f62e8a57cc5e3f0ca3eed012fee147dbac0eb"},
+    {file = "pycld2-0.42.tar.gz", hash = "sha256:5188084c97f99e896cf464057c64f6b0f91f68d111182dceb5bcfe487d7f4c0f"},
+]
+
+[[package]]
 name = "pycparser"
 version = "2.22"
 description = "C parser in Python"
@@ -2389,4 +2454,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "d6311685593b53896d7eeb34ba49aa308e0091aab6bff8bd9f5891174f563c1c"
+content-hash = "f77ca81f33fba2493d964de8d0c3113a9d49396c1a7d218984bed9f6083d39bb"

@@ -134,8 +134,8 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
                 # send chunk directly
                 await websocket.send_json({
                     "type": "response_chunk",
-                    "text": chunk,
-                    "session_id": session_id
+                    "text": chunk
+                    # "session_id": session_id
                 })
 
                 # Send complete sentences when possible

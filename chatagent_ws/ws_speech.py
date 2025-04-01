@@ -13,6 +13,7 @@ from httpx import AsyncClient, TimeoutException, RequestError, HTTPStatusError
 from nltk.tokenize import sent_tokenize
 
 from app_config import APP_API_HOST, APP_API_PORT, APP_WS_IDLE_TIMEOUT_SECONDS, APP_SPEECH_GOOGLE_VOICE
+from chatagent_ws.language_util import detect_language_code, get_voice_name_by_lang_code
 from logging_util import get_logger
 from session_manager import validate_token, check_rate_limits, get_client_ip_from_websocket
 
@@ -27,11 +28,10 @@ except LookupError:
 logger = get_logger("ws_speech")
 logging.basicConfig(level=logging.INFO)
 
-client = texttospeech.TextToSpeechClient()
+text_to_speech_client = texttospeech.TextToSpeechClient()
 
 MAX_BUFFER_SIZE = 1024 * 1024  # 1MB buffer limit
 MAX_INPUT_SIZE = 10 * 1024  # 10KB input limit
-
 
 async def call_speech_streaming_api(
         message: str,
@@ -66,7 +66,6 @@ async def call_speech_streaming_api(
             logger.error(f"API call failed: {e}")
             raise
 
-
 async def process_input(user_input: str, websocket: WebSocket, session_id: str):
     logger.info("Processing input")
     if len(user_input) > MAX_INPUT_SIZE:
@@ -78,11 +77,6 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
 
     data = json.loads(user_input)
     text_input = data.get("text", "").strip()
-    voice_name = data.get("voice", None)
-
-    # Validate voice_name
-    if not voice_name or not all(c.isalnum() or c in "-_" for c in voice_name):
-        voice_name = APP_SPEECH_GOOGLE_VOICE
 
     if not text_input:
         await websocket.send_json({
@@ -104,7 +98,7 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
 
             if chunk == "[DONE]":
                 if buffer.strip():
-                    await _process_buffer(buffer.strip(), voice_name, websocket, session_id)
+                    await send_text_and_audio(buffer.strip(), websocket, session_id)
                 break
             elif "Error:" in chunk:
                 await websocket.send_json({"type": "stream_error", "text": chunk})
@@ -113,27 +107,22 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
                 buffer += chunk
                 sentences = sent_tokenize(buffer)
                 if len(sentences) > 1 or (sentences and chunk.endswith(('. ', '? ', '! '))):
-                    await _process_buffer(sentences[0].strip(), voice_name, websocket, session_id)
+                    await send_text_and_audio(sentences[0].strip(), websocket, session_id)
                     buffer = sentences[-1]
 
         await websocket.send_json({"type": "response_end"})
     except Exception as e:
         logger.error(f"Processing error: {e}")
         await websocket.send_json({"type": "stream_error", "text": str(e)})
-
-
-async def _process_buffer(text: str, voice_name: str, websocket: WebSocket, session_id: str):
-    if text:
-        await send_text_and_audio(text, voice_name, websocket, session_id)
-
-
-async def send_text_and_audio(text: str, voice_name: str, websocket: WebSocket, session_id: str):
+async def send_text_and_audio(text: str,websocket: WebSocket, session_id: str):
     try:
         await websocket.send_json({
             "type": "response_chunk",
             "text": text,
             "session_id": session_id
         })
+        lang_code = detect_language_code(text.strip())
+        voice_name = get_voice_name_by_lang_code(lang_code)
 
         synthesis_input = texttospeech.SynthesisInput(text=text)
         voice = texttospeech.VoiceSelectionParams(
@@ -141,24 +130,34 @@ async def send_text_and_audio(text: str, voice_name: str, websocket: WebSocket, 
             name=voice_name
         )
         audio_config = texttospeech.AudioConfig(
+            # audio_encoding=texttospeech.AudioEncoding.LINEAR16,  # Uncompressed 16-bit PCM
+            # sample_rate_hertz=24000,
             audio_encoding=texttospeech.AudioEncoding.MP3,
             speaking_rate=1.0,
             pitch=0.0
         )
 
-        response = client.synthesize_speech(
+        response = text_to_speech_client.synthesize_speech(
             input=synthesis_input,
             voice=voice,
             audio_config=audio_config
         )
         audio_data = response.audio_content
-        base64_audio = base64.b64encode(audio_data).decode('utf-8')
-
+        # base64_audio = base64.b64encode(audio_data).decode('utf-8')
+        # await websocket.send_json({
+        #     "type": "audio_chunk",
+        #     "audio": base64_audio,
+        #     "voice_name": voice_name
+        # })
+        metadata = {"type": "audio", "format": "mp3", "length": len(response.audio_content)}
+        await websocket.send(json.dumps(metadata))
+        await websocket.send(audio_data)
         await websocket.send_json({
-            "type": "audio_chunk",
-            "audio": base64_audio,
-            "session_id": session_id
+            "type": "response_chunk",
+            "text": text
+            # "session_id": session_id
         })
+
     except Exception as e:
         logger.error(f"Send text/audio error: {e}")
         raise
@@ -177,7 +176,7 @@ async def websocket_speech_endpoint(websocket: WebSocket):
     logger.info("websocket_speech_endpoint connection established")
 
     last_activity = asyncio.get_event_loop().time()  # Track last activity time
-    idle_timeout = APP_WS_IDLE_TIMEOUT_SECONDS  # 10 minutes in seconds
+    idle_timeout = APP_WS_IDLE_TIMEOUT_SECONDS
 
     async def check_idle():
         """
@@ -228,13 +227,13 @@ async def websocket_speech_endpoint(websocket: WebSocket):
             await websocket.close(code=1002, reason="Rate limit exceeded")
             return
         # Send a message to the client to indicate successful connection and session validation
-#        await websocket.send_json({"type": "connection_success", "session_id": session_id})
+        #        await websocket.send_json({"type": "connection_success", "session_id": session_id})
 
         while True:
             message = await websocket.receive_text()
-            last_activity = asyncio.get_event_loop().time() #update last_activity
+            last_activity = asyncio.get_event_loop().time()  # update last_activity
             data = json.loads(message)
-            if data.get("type") == "userInput":
+            if data.get("type") == "userInput" or data.get("type") == "user_input":
                 session_token = data.get("session_token")
                 if not session_token:
                     await websocket.send_json({
