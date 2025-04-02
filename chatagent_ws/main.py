@@ -8,9 +8,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 
-from logging_util import get_logger
-from session_manager import session_redis_client, generate_session_token, verify_api_key, validate_token, \
-    get_client_ip_from_request
 from app_config import (
     APP_SECURITY_TOKEN_EXPIRY_SECONDS,
     APP_WS_PORT,
@@ -18,6 +15,9 @@ from app_config import (
     APP_WS_TIMEOUT_SECONDS,
     APP_WS_ALLOWED_ORIGIN
 )
+from logging_util import get_logger
+from session_manager import session_redis_client, generate_session_token, verify_api_key, validate_token, \
+    get_client_ip_from_request
 from ws_speech import websocket_speech_endpoint
 from ws_text import websocket_text_endpoint
 

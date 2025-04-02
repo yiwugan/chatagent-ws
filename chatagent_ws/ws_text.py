@@ -4,7 +4,7 @@ import logging
 from typing import AsyncIterator, Optional, Dict
 from urllib.parse import parse_qs
 
-import nltk
+# import nltk
 from dotenv import load_dotenv
 from fastapi import WebSocket, WebSocketDisconnect
 from httpx import AsyncClient, TimeoutException, RequestError, HTTPStatusError
@@ -16,10 +16,10 @@ from session_manager import validate_token, check_rate_limits, get_client_ip_fro
 load_dotenv()
 
 # NLTK setup
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
+# try:
+#     nltk.data.find('tokenizers/punkt')
+# except LookupError:
+#     nltk.download('punkt')
 
 logger = get_logger("ws_text")
 logging.basicConfig(level=logging.INFO)

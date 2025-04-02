@@ -1,37 +1,28 @@
 import asyncio
-import base64
 import json
-import logging
 from typing import AsyncIterator, Optional, Dict
 from urllib.parse import parse_qs
 
-import nltk
 from dotenv import load_dotenv
 from fastapi import WebSocket, WebSocketDisconnect
 from google.cloud import texttospeech
 from httpx import AsyncClient, TimeoutException, RequestError, HTTPStatusError
-from nltk.tokenize import sent_tokenize
 
-from app_config import APP_API_HOST, APP_API_PORT, APP_WS_IDLE_TIMEOUT_SECONDS, APP_SPEECH_GOOGLE_VOICE
-from chatagent_ws.language_util import detect_language_code, get_voice_name_by_lang_code
+from app_config import APP_API_HOST, APP_API_PORT, APP_WS_IDLE_TIMEOUT_SECONDS
+from language_util import detect_language_code_and_voice_name, spacy_tokenize_text, extract_language_name_from_llm_text, \
+    get_voice_code_name_by_language_name
 from logging_util import get_logger
 from session_manager import validate_token, check_rate_limits, get_client_ip_from_websocket
 
 load_dotenv()
 
-# NLTK setup
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
-
 logger = get_logger("ws_speech")
-logging.basicConfig(level=logging.INFO)
 
 text_to_speech_client = texttospeech.TextToSpeechClient()
 
 MAX_BUFFER_SIZE = 1024 * 1024  # 1MB buffer limit
 MAX_INPUT_SIZE = 10 * 1024  # 10KB input limit
+
 
 async def call_speech_streaming_api(
         message: str,
@@ -66,6 +57,7 @@ async def call_speech_streaming_api(
             logger.error(f"API call failed: {e}")
             raise
 
+
 async def process_input(user_input: str, websocket: WebSocket, session_id: str):
     logger.info("Processing input")
     if len(user_input) > MAX_INPUT_SIZE:
@@ -87,6 +79,7 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
 
     try:
         buffer = ""
+        language_name = "ENGLISH"
         async for chunk in call_speech_streaming_api(text_input, session_id):
             if len(buffer) + len(chunk) > MAX_BUFFER_SIZE:
                 logger.error("Buffer size exceeded")
@@ -98,35 +91,49 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
 
             if chunk == "[DONE]":
                 if buffer.strip():
-                    await send_text_and_audio(buffer.strip(), websocket, session_id)
+                    lang_code, voice_code, voice_name = get_voice_code_name_by_language_name(language_name)
+                    # lang_code, voice_code, voice_name, lang_name = detect_language_code_and_voice_name(buffer.strip())
+                    await send_text_and_audio(buffer.strip(), websocket, lang_code, voice_code, voice_name)
                 break
             elif "Error:" in chunk:
                 await websocket.send_json({"type": "stream_error", "text": chunk})
                 return
             else:
-                buffer += chunk
-                sentences = sent_tokenize(buffer)
-                if len(sentences) > 1 or (sentences and chunk.endswith(('. ', '? ', '! '))):
-                    await send_text_and_audio(sentences[0].strip(), websocket, session_id)
+                logger.debug(f"received llm chunk:{chunk}")
+                cleaned_chunk = chunk.replace("**", "").replace("--", "")
+                buffer += cleaned_chunk
+                llm_language_name=extract_language_name_from_llm_text(buffer.strip())
+                if llm_language_name is not None:
+                    buffer=buffer.replace(f"language-name:{llm_language_name}","").replace("\n","")
+                    language_name=llm_language_name.upper()
+                    # logger.info(f"language name: {llm_language_name}")
+                # lang_code, voice_code, voice_name, lang_name = detect_language_code_and_voice_name(buffer.strip())
+                lang_code, voice_code, voice_name = get_voice_code_name_by_language_name(language_name)
+                logger.info(f"detected language: {language_name} {lang_code}, {voice_name}")
+                sentences=spacy_tokenize_text(buffer,language_name)
+                logger.debug(f"sentences list:{sentences}")
+                if len(sentences) > 1 or (sentences and cleaned_chunk.endswith(('. ', '? ', '! '))):
+                    if sentences[0].strip():
+                        await send_text_and_audio(sentences[0].strip(), websocket, lang_code, voice_code, voice_name)
+                    else:
+                        logger.debug(f"skip empty sentence:{sentences[0]}")
                     buffer = sentences[-1]
 
         await websocket.send_json({"type": "response_end"})
     except Exception as e:
         logger.error(f"Processing error: {e}")
+        logger.exception(e)
         await websocket.send_json({"type": "stream_error", "text": str(e)})
-async def send_text_and_audio(text: str,websocket: WebSocket, session_id: str):
-    try:
-        await websocket.send_json({
-            "type": "response_chunk",
-            "text": text,
-            "session_id": session_id
-        })
-        lang_code = detect_language_code(text.strip())
-        voice_name = get_voice_name_by_lang_code(lang_code)
 
+
+async def send_text_and_audio(text: str, websocket: WebSocket, lang_code: str, voice_code: str, voice_name: str):
+    try:
+        # lang_code, voice_code, voice_name, lang_name = detect_language_code_and_voice_name(text.strip())
+        # logger.debug(f"detected language code: {lang_code}, {voice_name}")
+        logger.debug(f"send_text_and_audio: {text}")
         synthesis_input = texttospeech.SynthesisInput(text=text)
         voice = texttospeech.VoiceSelectionParams(
-            language_code=f"{voice_name.split('-')[0]}-{voice_name.split('-')[1]}",
+            language_code=f"{voice_code}",
             name=voice_name
         )
         audio_config = texttospeech.AudioConfig(
@@ -149,17 +156,20 @@ async def send_text_and_audio(text: str,websocket: WebSocket, session_id: str):
         #     "audio": base64_audio,
         #     "voice_name": voice_name
         # })
-        metadata = {"type": "audio", "format": "mp3", "length": len(response.audio_content)}
-        await websocket.send(json.dumps(metadata))
-        await websocket.send(audio_data)
+        logger.debug(f"before send audio")
+        await websocket.send_bytes(audio_data)
+        logger.debug(f"before send metadata")
+        metadata = {"type": "audio_metadata", "format": "mp3", "lang_code": lang_code,
+                    "length": len(response.audio_content)}
+        await websocket.send_json(metadata)
+        logger.debug(f"before send text")
         await websocket.send_json({
             "type": "response_chunk",
             "text": text
-            # "session_id": session_id
         })
 
     except Exception as e:
-        logger.error(f"Send text/audio error: {e}")
+        logger.exception(f"Send text/audio error: {e}")
         raise
 
 

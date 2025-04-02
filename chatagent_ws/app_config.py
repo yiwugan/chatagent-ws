@@ -11,7 +11,7 @@ APP_VERSION = os.getenv("APP_VERSION", "0.1.0")
 # APP_WS_HOST= os.getenv("APP_WS_HOST", "0.0.0.0")
 APP_WS_PORT = int(os.getenv("APP_WS_PORT", 8001))
 APP_WS_API_KEY = os.getenv("APP_WS_API_KEY", "")
-APP_WS_TIMEOUT_SECONDS = int(os.getenv("APP_WS_TIMEOUT_SECONDS", 600))
+APP_WS_TIMEOUT_SECONDS = int(os.getenv("APP_WS_TIMEOUT_SECONDS", 1200))
 
 APP_WS_ALLOWED_ORIGIN = os.getenv("APP_WS_ALLOWED_ORIGIN", "https://localhost")
 
@@ -44,8 +44,8 @@ APP_SPEECH_GOOGLE_VOICE_KR = os.getenv("APP_SPEECH_GOOGLE_VOICE_KR", "ko-KR-Wave
 APP_SPEECH_GOOGLE_VOICE_CN = os.getenv("APP_SPEECH_GOOGLE_VOICE_CN", "cmn-CN-Wavenet-A")
 APP_SPEECH_GOOGLE_VOICE_ES = os.getenv("APP_SPEECH_GOOGLE_VOICE_ES", "es-ES-Wavenet-C")
 APP_SPEECH_GOOGLE_VOICE_DE = os.getenv("APP_SPEECH_GOOGLE_VOICE_DE", "de-DE-Wavenet-A")
-APP_SPEECH_GOOGLE_VOICE_IN = os.getenv("APP_SPEECH_GOOGLE_VOICE_IN", "hi-IN-Wavenet-A")
-
+# APP_SPEECH_GOOGLE_VOICE_IN = os.getenv("APP_SPEECH_GOOGLE_VOICE_IN", "hi-IN-Wavenet-A")
+APP_SPEECH_GOOGLE_VOICE_RU = os.getenv("APP_SPEECH_GOOGLE_VOICE_RU", "ru-RU-Wavenet-A")
 
 #en-US-Standard-A
 #en-US-Chirp3-HD-Aoede
