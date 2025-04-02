@@ -29,8 +29,14 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages/ /usr/local/lib/pyth
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
 # Install NLTK and download punkt_tab
-RUN pip install nltk && \
-    python -m nltk.downloader -d /usr/local/share/nltk_data punkt_tab
+RUN pip install spacy && \
+    python -m spacy download en_core_web_sm && \
+    python -m spacy download fr_core_news_sm && \
+    python -m spacy download es_core_news_sm && \
+    python -m spacy download de_core_news_sm && \
+    python -m spacy download zh_core_web_sm && \
+    python -m spacy download ja_core_news_sm && \
+    python -m spacy download ko_core_news_sm
 
 # Copy the source code
 COPY chatagent_ws/ ./
