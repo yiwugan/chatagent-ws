@@ -2,6 +2,7 @@
 from dotenv import load_dotenv
 from lingua import LanguageDetectorBuilder, Language
 import re
+from spacy.tokens import Doc
 
 from app_config import APP_SPEECH_GOOGLE_VOICE_CN, APP_SPEECH_GOOGLE_VOICE_ES, APP_SPEECH_GOOGLE_VOICE_FR, \
     APP_SPEECH_GOOGLE_VOICE_DE, APP_SPEECH_GOOGLE_VOICE_JP, APP_SPEECH_GOOGLE_VOICE_KR, \
@@ -56,6 +57,24 @@ spacy_models_names = {
     Language.KOREAN.name: "ko_core_news_sm"
 }
 
+
+# Custom component to define sentence boundaries
+@spacy.Language.component("custom_sentence_boundaries")
+def custom_sentence_boundaries(doc):
+    # Initially, assume no token starts a sentence
+    for token in doc:
+        token.is_sent_start = False
+    # Set sentence starts only after "。"
+    for i, token in enumerate(doc[:-1]):  # Skip the last token
+        if token.text == "。" or token.text == "？" or token.text == "！" or token.text == "，":
+            if i + 1 < len(doc):  # Ensure there's a next token
+                doc[i + 1].is_sent_start = True
+    # Ensure the first token starts a sentence
+    if doc:
+        doc[0].is_sent_start = True
+    return doc
+
+
 def load_spacy_model(model_name):
     """
     Loads a spaCy language model. Downloads it at runtime if not found.
@@ -66,6 +85,9 @@ def load_spacy_model(model_name):
     """
     try:
         nlp = spacy.load(model_name)
+        if model_name==Language.ENGLISH.name or model_name==Language.JAPANESE.name:
+            nlp.remove_pipe("senter") if "senter" in nlp.pipe_names else None
+            nlp.add_pipe("custom_sentence_boundaries", before="parser")
         logger.info(f"Successfully loaded model: {model_name}")
         return nlp
     except OSError:
@@ -95,9 +117,12 @@ def load_spacy_models():
 spacy_models = load_spacy_models()
 
 
-def spacy_tokenize_text(text:str, lang_name:str):
+def spacy_tokenize_text(input_text:str, lang_name:str):
     nlp=spacy_models[lang_name]
-    doc = nlp(text)
+    # if lang_name == Language.ENGLISH.name or lang_name == Language.JAPANESE.name:
+    #     nlp.remove_pipe("senter") if "senter" in nlp.pipe_names else None
+    #     nlp.add_pipe("custom_sentence_boundaries", before="parser")
+    doc = nlp(input_text)
     return [sent.text for sent in doc.sents]
 
 
