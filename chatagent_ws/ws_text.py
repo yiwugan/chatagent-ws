@@ -10,6 +10,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from httpx import AsyncClient, TimeoutException, RequestError, HTTPStatusError
 
 from app_config import APP_API_HOST, APP_API_PORT, APP_WS_IDLE_TIMEOUT_SECONDS
+from chatagent_ws.language_util import fix_markdown_list_spacing
 from logging_util import get_logger
 from session_manager import validate_token, check_rate_limits, get_client_ip_from_websocket
 
@@ -132,9 +133,10 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
                 return
             else:
                 # send chunk directly
+                fixed_chunk=fix_markdown_list_spacing(chunk.strip())
                 await websocket.send_json({
                     "type": "response_chunk",
-                    "text": chunk
+                    "text": fixed_chunk
                     # "session_id": session_id
                 })
 

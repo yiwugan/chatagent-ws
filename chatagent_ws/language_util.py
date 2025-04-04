@@ -192,3 +192,37 @@ def get_voice_code_name_by_language_name(lang_name:str):
     else:
         return lang_code_en, lang_code_en, APP_SPEECH_GOOGLE_VOICE_EN
 
+def fix_markdown_list_spacing(markdown_text):
+    """
+    Ensures that list item markers (*, -, +) in Markdown have a newline
+    character before them if they don't already.
+
+    Args:
+        markdown_text: The input Markdown text as a string.
+
+    Returns:
+        The corrected Markdown text as a string.
+    """
+    lines = markdown_text.splitlines()
+    corrected_lines = []
+    in_list = False  # Keep track if we are currently inside a list
+
+    for i, line in enumerate(lines):
+        stripped_line = line.lstrip()
+        is_list_item = (stripped_line.startswith("* ")
+                       or stripped_line.startswith("** "))
+                       # stripped_line.startswith("- ") or \
+                       # stripped_line.startswith("+ "))
+
+        if is_list_item:
+            if i > 0 and not lines[i-1].strip() == "":
+                corrected_lines.append("")  # Add a newline before the list item
+            corrected_lines.append(line)
+            in_list = True
+        else:
+            corrected_lines.append(line)
+            if stripped_line:  # If the current line is not empty after stripping
+                in_list = False
+
+    return "\n".join(corrected_lines)
+

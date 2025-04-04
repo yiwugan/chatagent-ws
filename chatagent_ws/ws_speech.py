@@ -10,7 +10,7 @@ from httpx import AsyncClient, TimeoutException, RequestError, HTTPStatusError
 
 from app_config import APP_API_HOST, APP_API_PORT, APP_WS_IDLE_TIMEOUT_SECONDS
 from language_util import detect_language_code_and_voice_name, spacy_tokenize_text, extract_language_name_from_llm_text, \
-    get_voice_code_name_by_language_name
+    get_voice_code_name_by_language_name, fix_markdown_list_spacing
 from logging_util import get_logger
 from session_manager import validate_token, check_rate_limits, get_client_ip_from_websocket
 
@@ -100,11 +100,12 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
                 return
             else:
                 logger.debug(f"received llm chunk:{chunk}")
-                cleaned_chunk = chunk.replace("**", "").replace("--", "")
+                cleaned_chunk = (chunk.replace("** ", "").replace("-- ", "")
+                                 .replace("* ", ""))
                 buffer += cleaned_chunk
                 llm_language_name=extract_language_name_from_llm_text(buffer.strip())
                 if llm_language_name is not None:
-                    buffer=buffer.replace(f"language-name:{llm_language_name}","").replace("\n","")
+                    buffer=buffer.strip().replace(f"language-name:{llm_language_name}","").replace("\n","")
                     language_name=llm_language_name.upper()
                     # logger.info(f"language name: {llm_language_name}")
                 # lang_code, voice_code, voice_name, lang_name = detect_language_code_and_voice_name(buffer.strip())
