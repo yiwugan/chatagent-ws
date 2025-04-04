@@ -9,8 +9,8 @@ from google.cloud import texttospeech
 from httpx import AsyncClient, TimeoutException, RequestError, HTTPStatusError
 
 from app_config import APP_API_HOST, APP_API_PORT, APP_WS_IDLE_TIMEOUT_SECONDS
-from language_util import detect_language_code_and_voice_name, spacy_tokenize_text, extract_language_name_from_llm_text, \
-    get_voice_code_name_by_language_name, fix_markdown_list_spacing
+from language_util import spacy_tokenize_text, extract_language_name_from_llm_text, \
+    get_voice_code_name_by_language_name
 from logging_util import get_logger
 from session_manager import validate_token, check_rate_limits, get_client_ip_from_websocket
 
