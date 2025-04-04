@@ -226,3 +226,29 @@ def fix_markdown_list_spacing(markdown_text):
 
     return "\n".join(corrected_lines)
 
+
+def fix_markdown_list_whitespace(markdown_text):
+    """
+    Ensures that Markdown list item markers (*) are followed by a
+    whitespace character.
+
+    Args:
+        markdown_text: The input Markdown text as a string.
+
+    Returns:
+        The corrected Markdown text as a string.
+    """
+    # Regular expression to find list markers not followed by whitespace
+    pattern = r"^(\s*)([\*])([^ \t\n])"
+    corrected_lines = []
+    for line in markdown_text.splitlines():
+        match = re.match(pattern, line)
+        if match:
+            indentation = match.group(1)
+            marker = match.group(2)
+            rest_of_line = match.group(3)
+            corrected_line = f"{indentation}{marker} {rest_of_line}"
+            corrected_lines.append(corrected_line)
+        else:
+            corrected_lines.append(line)
+    return "\n".join(corrected_lines)
