@@ -93,7 +93,7 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
                 if buffer.strip():
                     lang_code, voice_code, voice_name = get_voice_code_name_by_language_name(language_name)
                     # lang_code, voice_code, voice_name, lang_name = detect_language_code_and_voice_name(buffer.strip())
-                    await send_text_and_audio(buffer.strip(), websocket, lang_code, voice_code, voice_name)
+                    await send_text_and_audio(buffer, websocket, lang_code, voice_code, voice_name)
                 break
             elif "Error:" in chunk:
                 await websocket.send_json({"type": "stream_error", "text": chunk})
@@ -103,9 +103,9 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
                 cleaned_chunk = (chunk.replace("** ", "").replace("-- ", "")
                                  .replace("* ", ""))
                 buffer += cleaned_chunk
-                llm_language_name=extract_language_name_from_llm_text(buffer.strip())
+                llm_language_name=extract_language_name_from_llm_text(buffer)
                 if llm_language_name is not None:
-                    buffer=buffer.strip().replace(f"language-name:{llm_language_name}","").replace("\n","")
+                    buffer=buffer.replace(f"language-name:{llm_language_name}","").replace("\n","")
                     language_name=llm_language_name.upper()
                     # logger.info(f"language name: {llm_language_name}")
                 # lang_code, voice_code, voice_name, lang_name = detect_language_code_and_voice_name(buffer.strip())
@@ -115,7 +115,7 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
                 logger.debug(f"sentences list:{sentences}")
                 if len(sentences) > 1 or (sentences and cleaned_chunk.endswith(('. ', '? ', '! '))):
                     if sentences[0].strip():
-                        await send_text_and_audio(sentences[0].strip(), websocket, lang_code, voice_code, voice_name)
+                        await send_text_and_audio(sentences[0], websocket, lang_code, voice_code, voice_name)
                     else:
                         logger.debug(f"skip empty sentence:{sentences[0]}")
                     buffer = sentences[-1]
