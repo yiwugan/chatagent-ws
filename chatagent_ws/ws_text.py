@@ -133,7 +133,7 @@ async def process_input(user_input: str, websocket: WebSocket, session_id: str):
                 return
             else:
                 # send chunk directly
-                fixed_chunk=fix_markdown_list_spacing(chunk.strip())
+                fixed_chunk=fix_markdown_list_spacing(chunk)
                 fixed_chunk=fix_markdown_list_whitespace(fixed_chunk)
                 await websocket.send_json({
                     "type": "response_chunk",
